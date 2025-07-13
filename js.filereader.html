@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Document</title>
+  <script src="https://kit.fontawesome.com/35f94a4c64.js" crossorigin="anonymous"></script>
+  <style>
+    #myImage {
+      display: none;
+    }
+    #myButton {
+      height: 50px;
+      width: 100px;
+    }
+    .post {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div style="display: flex;">
+    <div style="display: flex; align-items: center;">
+      <img width="300" height="300" id="myImage" src="" alt="" />
+      <button id="myButton">Post</button>
+    </div>
+    <input type="file" id="pictures" accept=".png" onchange="pickPicture(event)" />
+  </div>
+
+  <div id="pages"></div>
+  <div class="likecounter">Likes: 0</div>
+
+  <script>
+    let myButton = document.getElementById('myButton');
+    let pages = document.getElementById('pages');
+    let myImage = document.getElementById('myImage');
+    let selectedImageData = '';
+    let likecounter = document.querySelector('.likecounter');
+    let totalLikes = parseInt(localStorage.getItem('likes')) || 0;
+
+    likecounter.innerHTML = `Likes: ${totalLikes}`;
+
+    function pickPicture(ev) {
+      let file = ev.target.files[0];
+      if (!file) return;
+
+      let kilobytesSize = file.size / 1000;
+      if (kilobytesSize > 100) {
+        alert('File is too large. Max is 100KB.');
+        return;
+      }
+
+      let reader = new FileReader();
+      reader.onload = (e) => {
+        selectedImageData = e.target.result;
+        myImage.src = selectedImageData;
+        myImage.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    myButton.addEventListener('click', () => {
+      if (!selectedImageData) {
+        alert("Please select an image first");
+        return;
+      }
+
+      const postHTML = `
+        <div class="post">
+          <img width="300" height="300" src="${selectedImageData}" alt="">
+          <button class="likeBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 -960 960 960" width="15px" fill="#666666">
+              <path d="M720-120H280v-520l280-280 50 50q7 7 11.5 19t4.5 23v14l-44 174h258q32 0 56 24t24 56v80q0 7-2 15t-4 15L794-168q-9 20-30 34t-44 14Zm-360-80h360l120-280v-80H480l54-220-174 174v406Zm0-406v406-406Zm-80-34v80H160v360h120v80H80v-520h200Z"/>
+            </svg>
+          </button>
+          <button class="dislikeBtn">
+            <i class="fa-solid fa-thumbs-down"></i>
+          </button>
+        </div>
+      `;
+
+      pages.innerHTML += postHTML;
+
+      
+      let savedPosts = JSON.parse(localStorage.getItem('posts')) || [];
+      savedPosts.push({ image: selectedImageData });
+      localStorage.setItem('posts', JSON.stringify(savedPosts));
+
+    
+      myImage.src = '';
+      myImage.style.display = 'none';
+      selectedImageData = '';
+      document.getElementById('pictures').value = '';
+    });
+
+    
+    pages.addEventListener('click', function (e) {
+      if (e.target.closest('.likeBtn')) {
+        totalLikes++;
+        likecounter.innerHTML = `Likes: ${totalLikes}`;
+        localStorage.setItem('likes', totalLikes);
+      }
+    });
+
+    
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedPosts = JSON.parse(localStorage.getItem('posts')) || [];
+      savedPosts.forEach(post => {
+        pages.innerHTML += `
+          <div class="post">
+            <img width="300" height="300" src="${post.image}" alt="">
+            <button class="likeBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 -960 960 960" width="15px" fill="#666666">
+                <path d="M720-120H280v-520l280-280 50 50q7 7 11.5 19t4.5 23v14l-44 174h258q32 0 56 24t24 56v80q0 7-2 15t-4 15L794-168q-9 20-30 34t-44 14Zm-360-80h360l120-280v-80H480l54-220-174 174v406Zm0-406v406-406Zm-80-34v80H160v360h120v80H80v-520h200Z"/>
+              </svg>
+            </button>
+            <button class="dislikeBtn">
+              <i class="fa-solid fa-thumbs-down"></i>
+            </button>
+          </div>
+        `;
+      });
+    });
+  </script>
+</body>
+</html>
