@@ -10,25 +10,49 @@
       display: none;
     }
     #myButton {
-      height: 50px;
       width: 100px;
+    background-color: green;
+    border: none;
+    border-radius: 5px;
     }
     .post {
       margin-bottom: 20px;
     }
+    body{
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      gap: 50px;
+
+    }
+    #profilePicture{
+      border-radius: 50%;
+      background-color: whitesmoke;
+    }
+    #preview{
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <div style="display: flex;">
-    <div style="display: flex; align-items: center;">
-      <img width="300" height="300" id="myImage" src="" alt="" />
-      <button id="myButton">Post</button>
+
+  <div style="display: flex;align-items: center;height: 200px;gap: 20px;color: white;border: 2px solid green;border-radius: 20px;width: 400px;">
+    <div style="display: flex;flex-direction: column;background-color: green;">
+      <img width="100" height="100" id="profilePicture"  src="" alt="">
+      <button style="width: 100px;" onclick="dpposter()">post dp</button>
+      <input onchange="pickPictur(event)" accept=".png,.webp" placeholder="edit profile" type="file">
+      <img id="preview" width="50px" height="50px" src="" alt="">
     </div>
-    <input type="file" id="pictures" accept=".png" onchange="pickPicture(event)" />
+   <div style="display: flex;flex-direction: column;">
+     <h1>facebbok</h1>
+    <button id="myButton">Post</button>
+    <input type="file" multiple id="pictures" accept=".png" onchange="pickPicture(event)" />
+    <img width="150" height="150" id="myImage" src="" alt="" />
+   </div>
   </div>
 
-  <div id="pages"></div>
-  <div class="likecounter">Likes: 0</div>
+  <div style="display: flex;flex-wrap: wrap;height: 500px;" id="pages"></div>
+  <!-- <div class="likecounter">Likes: 0</div> -->
 
   <script>
     let myButton = document.getElementById('myButton');
@@ -37,8 +61,32 @@
     let selectedImageData = '';
     let likecounter = document.querySelector('.likecounter');
     let totalLikes = parseInt(localStorage.getItem('likes')) || 0;
+    let currentUser = JSON.parse(localStorage.getItem('currentUser'))
+    let currentUserBlogsArr = currentUser.blogPosts
+    let users = JSON.parse(localStorage.getItem('users')) || [];
+     
+    
+    // likecounter.innerHTML = `Likes: ${totalLikes}`;
+    function pickPictur(ve) {
+      let file2 = ve.target.files[0]
+      if (!file2) {
+        alert('Cant upload an empty file')
+        return
+      }
+      let reader2 = new FileReader()
+      reader2.readAsDataURL(file2)
+      reader2.addEventListener('load', (e) => {
+        preview.style.display = 'block'
+        preview.src = e.target.result
+      } )
+    }
+    profilePicture.src = currentUser.pickPictur || 'JS SIGNUPPAGE/jsdefaultpic - Copy.webp' 
+    localStorage.setItem('users', JSON.stringify(users));
+    function dpposter() {
+     profilePicture.src = preview.src 
+     preview.style.display = 'none'
 
-    likecounter.innerHTML = `Likes: ${totalLikes}`;
+    }
 
     function pickPicture(ev) {
       let file = ev.target.files[0];
@@ -64,14 +112,17 @@
         alert("Please select an image first");
         return;
       }
-
+      let eachpostObj = {
+        image:selectedImageData,
+        liked:false
+      }
       const postHTML = `
         <div class="post">
-          <img width="300" height="300" src="${selectedImageData}" alt="">
+          <img width="150" height="150" src="${selectedImageData}" alt="">
           <button class="likeBtn">
             <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 -960 960 960" width="15px" fill="#666666">
               <path d="M720-120H280v-520l280-280 50 50q7 7 11.5 19t4.5 23v14l-44 174h258q32 0 56 24t24 56v80q0 7-2 15t-4 15L794-168q-9 20-30 34t-44 14Zm-360-80h360l120-280v-80H480l54-220-174 174v406Zm0-406v406-406Zm-80-34v80H160v360h120v80H80v-520h200Z"/>
-            </svg>
+            </svg> 
           </button>
           <button class="dislikeBtn">
             <i class="fa-solid fa-thumbs-down"></i>
@@ -82,9 +133,9 @@
       pages.innerHTML += postHTML;
 
       
-      let savedPosts = JSON.parse(localStorage.getItem('posts')) || [];
-      savedPosts.push({ image: selectedImageData });
-      localStorage.setItem('posts', JSON.stringify(savedPosts));
+      let currentUserBlogsArr = JSON.parse(localStorage.getItem('posts')) || [];
+      currentUserBlogsArr.push(eachpostObj);
+      localStorage.setItem('posts', JSON.stringify(currentUserBlogsArr));
 
     
       myImage.src = '';
@@ -94,33 +145,52 @@
     });
 
     
-    pages.addEventListener('click', function (e) {
-      if (e.target.closest('.likeBtn')) {
-        totalLikes++;
-        likecounter.innerHTML = `Likes: ${totalLikes}`;
-        localStorage.setItem('likes', totalLikes);
-      }
-    });
+    // pages.addEventListener('click', function (e) {
+    //   if (e.target.closest('.likeBtn')) {
+    //     totalLikes++;
+    //     likecounter.innerHTML = `Likes: ${totalLikes}`;
+    //     localStorage.setItem('likes', totalLikes);
+    //   }
+    // });
 
     
     window.addEventListener('DOMContentLoaded', () => {
-      const savedPosts = JSON.parse(localStorage.getItem('posts')) || [];
-      savedPosts.forEach(post => {
+      const currentUserBlogsArr = JSON.parse(localStorage.getItem('posts')) || [];
+      currentUserBlogsArr.forEach((post,i) => {
         pages.innerHTML += `
           <div class="post">
-            <img width="300" height="300" src="${post.image}" alt="">
-            <button class="likeBtn">
+            <img width="150" height="150" src="${post.image}" alt="">
+            <button onclick="liker(${i})" class="likeBtn">
               <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 -960 960 960" width="15px" fill="#666666">
                 <path d="M720-120H280v-520l280-280 50 50q7 7 11.5 19t4.5 23v14l-44 174h258q32 0 56 24t24 56v80q0 7-2 15t-4 15L794-168q-9 20-30 34t-44 14Zm-360-80h360l120-280v-80H480l54-220-174 174v406Zm0-406v406-406Zm-80-34v80H160v360h120v80H80v-520h200Z"/>
-              </svg>
+              </svg> ${post.liked ? 'liked:i++' : 'unliked:0'}
             </button>
-            <button class="dislikeBtn">
+            <button onclick="unlike(${i})" class="dislikeBtn">
               <i class="fa-solid fa-thumbs-down"></i>
             </button>
           </div>
         `;
       });
     });
+
+      function liker(index) {
+       currentUserBlogsArr[index].liked = !currentUserBlogsArr[index].liked 
+       currentUserBlogsArr.forEach((post,i) => {
+        pages.innerHTML += `
+          <div class="post">
+            <img width="150" height="150" src="${post.image}" alt="">
+            <button onclick="liker(${i})" class="likeBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" height="15px" viewBox="0 -960 960 960" width="15px" fill="#666666">
+                <path d="M720-120H280v-520l280-280 50 50q7 7 11.5 19t4.5 23v14l-44 174h258q32 0 56 24t24 56v80q0 7-2 15t-4 15L794-168q-9 20-30 34t-44 14Zm-360-80h360l120-280v-80H480l54-220-174 174v406Zm0-406v406-406Zm-80-34v80H160v360h120v80H80v-520h200Z"/>
+              </svg> ${post.liked ? 'liked:i++' : 'unliked:0'}
+            </button>
+            <button onclick="unlike(${i})" class="dislikeBtn">
+              <i class="fa-solid fa-thumbs-down"></i>
+            </button>
+          </div>
+        `;
+      });
+      }
   </script>
 </body>
 </html>
